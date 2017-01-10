@@ -4,10 +4,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
-
 import com.digits.sdk.android.AuthCallback;
 import com.digits.sdk.android.Digits;
-import com.digits.sdk.android.DigitsAuthConfig;
+import com.digits.sdk.android.AuthConfig;
 import com.digits.sdk.android.DigitsException;
 import com.digits.sdk.android.DigitsOAuthSigning;
 import com.digits.sdk.android.DigitsSession;
@@ -30,8 +29,8 @@ import io.fabric.sdk.android.Fabric;
 
 public class DigitsManager extends ReactContextBaseJavaModule implements LifecycleEventListener, AuthCallback {
 
-    private static final String META_DATA_KEY = "io.Digits.ApiKey";
-    private static final String META_DATA_SECRET = "io.Digits.ApiSecret";
+    private static final String META_DATA_KEY = "io.fabric.ApiKey";
+    private static final String META_DATA_SECRET = "io.fabric.ApiSecret";
     private static final String TAG = "RCTDigits";
 
     private boolean paused = false;
@@ -42,6 +41,7 @@ public class DigitsManager extends ReactContextBaseJavaModule implements Lifecyc
 
     public DigitsManager(ReactApplicationContext reactContext) {
         super(reactContext);
+        getReactApplicationContext().addLifecycleEventListener(this);
     }
 
     @Override
@@ -62,16 +62,14 @@ public class DigitsManager extends ReactContextBaseJavaModule implements Lifecyc
         String phoneNumber = options.hasKey("phoneNumber") ? options.getString("phoneNumber") : "";
 
         // Check for Twitter config
-        TwitterAuthConfig authConfig = getTwitterAuthConfig();
-        Fabric.with(getReactApplicationContext(), new TwitterCore(authConfig), new Digits());
+        getTwitterAuthConfig();
 
-        DigitsAuthConfig.Builder digitsAuthConfigBuilder = new DigitsAuthConfig.Builder()
+        AuthConfig.Builder digitsAuthConfigBuilder = new AuthConfig.Builder()
                 .withAuthCallBack(this)
-                .withPhoneNumber(phoneNumber)
-                .withThemeResId(R.style.CustomDigitsTheme);
+                .withPhoneNumber(phoneNumber);
 
         if (options.hasKey("email")) {
-          digitsAuthConfigBuilder.withEmailCollection();
+            digitsAuthConfigBuilder.withEmailCollection();
         }
 
         Digits.authenticate(digitsAuthConfigBuilder.build());
@@ -79,15 +77,15 @@ public class DigitsManager extends ReactContextBaseJavaModule implements Lifecyc
 
     @ReactMethod
     public void logout() {
-        Digits.getSessionManager().clearActiveSession();
+        Digits.clearActiveSession();
     }
 
     @ReactMethod
     public void sessionDetails(Callback callback) {
-        DigitsSession session = Digits.getSessionManager().getActiveSession();
+        DigitsSession session = Digits.getActiveSession();
         if (session != null) {
             WritableMap sessionData = new WritableNativeMap();
-            sessionData.putString("userId", new Long(session.getId()).toString());
+            sessionData.putString("userId", Long.valueOf(session.getId()).toString());
             sessionData.putString("phoneNumber", session.getPhoneNumber().replaceAll("[^0-9]", ""));
             callback.invoke(null, sessionData);
         } else {
@@ -166,7 +164,9 @@ public class DigitsManager extends ReactContextBaseJavaModule implements Lifecyc
 
             promise.resolve(authHeadersNativeMap);
         } else if (digitsException != null) {
-            promise.reject(digitsException.toString());
+            promise.reject(digitsException.getErrorCode()+""
+                    , digitsException.getMessage()
+                    , digitsException);
         } else {
             promise.reject("Authentification failed without exception.");
         }

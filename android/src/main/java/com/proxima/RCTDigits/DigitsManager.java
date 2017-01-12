@@ -55,8 +55,6 @@ public class DigitsManager extends ReactContextBaseJavaModule implements Lifecyc
             promise.reject("Authentification process still in progress.");
             return;
         }
-
-        getReactApplicationContext().addLifecycleEventListener(this);
         this.promise = promise;
 
         String phoneNumber = options.hasKey("phoneNumber") ? options.getString("phoneNumber") : "";

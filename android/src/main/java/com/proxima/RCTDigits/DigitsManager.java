@@ -56,8 +56,9 @@ public class DigitsManager extends ReactContextBaseJavaModule implements Lifecyc
             return;
         }
         this.promise = promise;
-
-        String phoneNumber = options.hasKey("phoneNumber") ? options.getString("phoneNumber") : "";
+        String phoneNumber="";
+        if (options != null)
+            phoneNumber = options.hasKey("phoneNumber") ? options.getString("phoneNumber") : "";
 
         // Check for Twitter config
         getTwitterAuthConfig();

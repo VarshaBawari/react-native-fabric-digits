@@ -57,19 +57,31 @@ public class DigitsManager extends ReactContextBaseJavaModule implements Lifecyc
         }
         this.promise = promise;
         String phoneNumber="";
-        if (options != null)
-            phoneNumber = options.hasKey("phoneNumber") ? options.getString("phoneNumber") : "";
-
+        try
+        {
+            if (options != null)
+                phoneNumber = options.hasKey("phoneNumber") ? options.getString("phoneNumber") : "";
+        }
+        catch (Exception e)
+        {
+            phoneNumber="";
+        }
         // Check for Twitter config
         getTwitterAuthConfig();
 
         AuthConfig.Builder digitsAuthConfigBuilder = new AuthConfig.Builder()
                 .withAuthCallBack(this)
                 .withPhoneNumber(phoneNumber);
-
-        if (options.hasKey("email")) {
-            digitsAuthConfigBuilder.withEmailCollection();
+        try
+        {
+            if (options.hasKey("email")) {
+                digitsAuthConfigBuilder.withEmailCollection();
+            }
         }
+        catch (Exception e)
+        {
+        }
+
 
         Digits.authenticate(digitsAuthConfigBuilder.build());
     }

@@ -56,33 +56,17 @@ public class DigitsManager extends ReactContextBaseJavaModule implements Lifecyc
             return;
         }
         this.promise = promise;
-        String phoneNumber="";
-        try
-        {
-            if (options != null)
-                phoneNumber = options.hasKey("phoneNumber") ? options.getString("phoneNumber") : "";
-        }
-        catch (Exception e)
-        {
-            phoneNumber="";
-        }
+        String phoneNumber = options != null && options.hasKey("phoneNumber") ?
+                options.getString("phoneNumber") : "";
         // Check for Twitter config
         getTwitterAuthConfig();
 
         AuthConfig.Builder digitsAuthConfigBuilder = new AuthConfig.Builder()
                 .withAuthCallBack(this)
                 .withPhoneNumber(phoneNumber);
-        try
-        {
-            if (options.hasKey("email")) {
-                digitsAuthConfigBuilder.withEmailCollection();
-            }
+        if (options != null && options.hasKey("email")) {
+            digitsAuthConfigBuilder.withEmailCollection();
         }
-        catch (Exception e)
-        {
-        }
-
-
         Digits.authenticate(digitsAuthConfigBuilder.build());
     }
 
@@ -96,8 +80,12 @@ public class DigitsManager extends ReactContextBaseJavaModule implements Lifecyc
         DigitsSession session = Digits.getActiveSession();
         if (session != null) {
             WritableMap sessionData = new WritableNativeMap();
-            sessionData.putString("userId", Long.valueOf(session.getId()).toString());
+            sessionData.putString("authToken", session.getAuthToken().token);
+            sessionData.putString("authTokenSecret", session.getAuthToken().secret);
+            sessionData.putString("userId", new Long(session.getId()).toString());
             sessionData.putString("phoneNumber", session.getPhoneNumber().replaceAll("[^0-9]", ""));
+            sessionData.putString("emailAddress", session.getEmail().address);
+            sessionData.putBoolean("emailAddressIsVerified", session.getEmail().verified);
             callback.invoke(null, sessionData);
         } else {
             callback.invoke(null, null);
